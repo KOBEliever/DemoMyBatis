@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?><!-- xml的编码 -->
+<!-- mybatis的config文件定义格式 -->
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!--1.配置数据源的属性集文件-->
+    <properties resource="jdbc.properties"/>
+    <!--2.开启驼峰命名规则-->
+    <settings>
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+    </settings>
+    <!--3.配置类型别名-->
+    <typeAliases>
+        <!--配置单个类型别名-->
+        <!--<typeAlias type="com.cqu.mybatis.pojo.Doc" alias="doc"></typeAlias>-->
+        <!--扫描所有的-->
+        <package name="com.cqu.mybatis.pojo"/>
+        <package name="com.cqu.mybatis.vo"/>
+
+    </typeAliases>
+    <!--4.配置JDBC连接-->
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="${mysql.driver}"/>
+                <property name="url" value="${mysql.url}"/>
+                <property name="username" value="${mysql.username}"/>
+                <property name="password" value="${mysql.password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+    <!--5.加载dao层mapper(映射)文件-->
+    <mappers>
+        <mapper resource="mappers/DocMapper.xml"/>
+        <mapper resource="mappers/CategoryMapper.xml"/>
+    </mappers>
+
+</configuration>

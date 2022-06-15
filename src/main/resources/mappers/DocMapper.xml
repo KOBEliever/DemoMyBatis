@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--命名空间 对应dao层的名称/完整限定名-->
+<mapper namespace="com.cqu.mybatis.dao.DocDao">
+    <select id="getDocById" resultType="com.cqu.mybatis.pojo.Doc">
+        select * from doc where doc_id=#{docId}
+    </select>
+    <select id="getDocByIdObj" resultType="com.cqu.mybatis.pojo.Doc" parameterType="com.cqu.mybatis.pojo.Doc">
+        select * from doc where doc_id=#{docId}
+    </select>
+    <insert id="insertDoc" parameterType="com.cqu.mybatis.pojo.Doc">
+        insert into doc(category_id,doc_title,doc_summary,doc_uploaduser,doc_createdate,doc_modifyuser,doc_modifydate,doc_image)
+        values(#{categoryId},#{docTitle},#{docSummary},#{docUploaduser},#{docCreatedate},#{docModifyuser},#{docModifydate},#{docImage})
+    </insert>
+    <update id="updateDoc" parameterType="com.cqu.mybatis.pojo.Doc">
+        update doc set doc_title=#{docTitle}
+        where doc_id=#{docId}
+    </update>
+    <!--多参数, 多类型入参 修改-->
+    <!--多参数使用dao层Param注解, 以注解时定义的名称为主, 与dao层方法的形参名称无关-->
+    <!--在多参数的情况下 有实体类入参, 需要使用Param注解时的名称 .属性名-->
+    <update id="updateDocParam">
+        update doc
+        set doc_title = #{title},doc_summary = #{doc.docSummary}
+        where doc_id = #{docId}
+    </update>
+    <delete id="deleteDoc" parameterType="com.cqu.mybatis.pojo.Doc">
+        delete from doc where doc_id = #{docId}
+    </delete>
+
+    <select id="getDocList" resultType="com.cqu.mybatis.pojo.Doc">
+        select * from doc
+    </select>
+
+    <select id="getDocListParamMap" resultType="com.cqu.mybatis.pojo.Doc">
+        select * from doc
+        where doc_title like concat('%',#{docTitle},'%')
+        and doc_summary like concat('%',#{docSummary},'%')
+    </select>
+    <!--实体类的一对一映射，将sql的列与类关联-->
+    <resultMap id="docAndCategoryOneToOne" type="com.cqu.mybatis.vo.DocAndCategory">
+        <id property="doc.docId" column="doc_id"/>
+        <association property="doc" javaType="com.cqu.mybatis.pojo.Doc" autoMapping="true">
+<!--            <result property="docTitle" column="doc_title"/>-->
+<!--            <result property="docSummary" column="doc_summary"/>-->
+        </association>
+        <association property="category" javaType="com.cqu.mybatis.pojo.Category" autoMapping="true">
+<!--            <id property="categoryId" column="category_id"/>-->
+<!--            <result property="categoryName" column="category_name"/>-->
+        </association>
+    </resultMap>
+    <select id="getDocAndCategory" resultMap="docAndCategoryOneToOne">
+        select * from doc , category
+        where doc.category_id=category.category_id and doc_id=#{docId}
+    </select>
+
+    <select id="getDocAndCategoryList" resultMap="docAndCategoryOneToOne">
+        select * from doc , category
+        where doc.category_id=category.category_id
+    </select>
+    <!--实体类的一对多映射，将sql的列与类关联-->
+    <resultMap id="categoryAndDocOneToMany" type="com.cqu.mybatis.vo.CategoryAndDoc">
+        <!--主表主键id，类型表-->
+        <id property="category.categoryId" column="category_id"/>
+        <association property="category" javaType="com.cqu.mybatis.pojo.Category" autoMapping="true">
+<!--            <id property="categoryId" column="category_id"/>-->
+<!--            <result property="categoryName" column="category_name"/>-->
+        </association>
+        <!--多-->
+        <collection property="docList" ofType="com.cqu.mybatis.pojo.Doc" autoMapping="true">
+<!--            <id property="docId" column="doc_id"/>-->
+<!--            <result property="docTitle" column="doc_title"/>-->
+        </collection>
+    </resultMap>
+    <select id="getCategoryAndDoc" resultMap="categoryAndDocOneToMany">
+        select * from category , doc
+        where category.category_id=doc.category_id
+        and category.category_id = #{categoryId}
+    </select>
+
+    <select id="getCategoryAndDocList" resultMap="categoryAndDocOneToMany">
+        select * from category , doc
+        where category.category_id=doc.category_id
+    </select>
+    <resultMap id="docAndCategoryAll" type="com.cqu.mybatis.vo.DocAndCategory">
+        <id property="doc.docId" column="doc_id"/>
+        <association property="doc" javaType="com.cqu.mybatis.pojo.Doc">
+            <id property="docId" column="doc_id"/>
+            <result property="docTitle" column="doc_title"/>
+        </association>
+        <association property="category" javaType="com.cqu.mybatis.pojo.Category" column="category_id" select="com.cqu.mybatis.dao.CategoryDao.getCategoryById">
+
+        </association>
+    </resultMap>
+    <sql id="selectDoc">
+        select * from doc
+    </sql>
+
+    <select id="getCategoryAndDocAll" resultMap="docAndCategoryAll">
+        <include refid="selectDoc"/>
+    </select>
+
+    <select id="getDocsByCondition" resultType="com.cqu.mybatis.pojo.Doc">
+        <include refid="selectDoc"/>
+        <where>
+            <if test="docTitle neq null and docTitle neq ''">
+                and doc_title like concat('%',#{docTitle},'%')
+            </if>
+        </where>
+    </select>
+
+    <!--动态sql set-if-->
+    <update id="updateDocByCondition" parameterType="com.cqu.mybatis.pojo.Doc">
+        update doc
+        <set>
+            <if test="docTitle neq null and docTitle neq ''">
+                doc_title = #{docTitle}
+            </if>
+            <if test="docSummary neq null and docSummary neq ''">
+                doc_summary = #{docSummary}
+            </if>
+        </set>
+        <where>
+            doc_id = #{docId}
+        </where>
+    </update>
+    <!--forEach循环-array-->
+    <select id="getDocsByForEach" resultType="com.cqu.mybatis.pojo.Doc">
+        <include refid="selectDoc"/>
+        <where>
+            doc_id in
+            <foreach collection="array" item="docId" open="(" close=")" separator=",">
+                #{docId}
+            </foreach>
+        </where>
+    </select>
+    <!--forEach循环-list-->
+    <select id="getDocsByForEachList" resultType="com.cqu.mybatis.pojo.Doc">
+        <include refid="selectDoc"/>
+        <where>
+            doc_id in
+            <foreach collection="list" item="docId" open="(" close=")" separator=",">
+                #{docId}
+            </foreach>
+        </where>
+    </select>
+    <!--forEach循环-map-->
+    <select id="getDocsByForEachMap" resultType="com.cqu.mybatis.pojo.Doc">
+        <include refid="selectDoc"/>
+        <where>
+            <if test="title neq null and title neq ''">
+                and doc_title like concat('%',#{title},'%')
+            </if>
+            and doc_id in
+            <foreach collection="docIds" item="docId" open="(" close=")" separator=",">
+                #{docId}
+            </foreach>
+        </where>
+    </select>
+    <!--choose,类似switch-->
+    <select id="getDocsByChoose" resultType="com.cqu.mybatis.pojo.Doc">
+        <include refid="selectDoc"/>
+        <where>
+            <choose>
+                <when test="docId eq 104">and doc_id=#{docId}+5</when>
+                <when test="docId eq 105">and doc_id=#{docId}+10</when>
+                <otherwise>
+                    and doc_id=#{docId}+15
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+    <!--分页-->
+    <select id="getDocsByTitleLimit" resultType="com.cqu.mybatis.pojo.Doc">
+        <include refid="selectDoc"/>
+        <where>
+            <if test="doc.docTitle neq null and doc.docTitle neq ''">
+                and doc_title like concat('%',#{doc.docTitle},'%')
+            </if>
+            limit #{start},#{limit}
+        </where>
+    </select>
+</mapper>
